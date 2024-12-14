@@ -5,7 +5,7 @@ The yolov8 object detection and segmentation
 1.Android yolov8 detection demo  
 2.yolov8s-seg.cpp  
 3.yolov8s-obb.cpp  
-
+## Note: obb & seg have not been completed yet
 ## Export ncnn model
 1.export detect model  
 ![](./doc/detect.png)  
