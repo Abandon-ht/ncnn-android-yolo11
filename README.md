@@ -6,16 +6,15 @@ The yolov8 object detection and segmentation
 2.yolov8s-seg.cpp  
 3.yolov8s-obb.cpp  
 
-## convert to onnx for ncnn
-1.change c2f split to slice  
-![](./doc/c2f.jpg)  
-2.for Detection model change class Detect output  
-![](./doc/Detect.jpg)  
-3.for Segmentation model change class Detect output and Segment output  
-![](./doc/Detect-seg.jpg)  
-![](./doc/Segment.jpg)  
+## Export ncnn model
+1.export detect model  
+![](./doc/detect.png)  
+2.export seg model  
+![](./doc/seg.png)  
+3.export detect-obb model   
+![](./doc/obb.png)  
 ## screenshot
-![](./ncnn-android-yolov8/screenshot.png)
+![](./ncnn-android-yolo11/screenshot.jpg)
 ![](yolov8s-seg.jpg)
 ![](yolov8s-obb.jpg)
 ## Reference：  
