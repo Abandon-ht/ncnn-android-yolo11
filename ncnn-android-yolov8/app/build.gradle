@@ -1,14 +1,14 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 24
+    compileSdkVersion 27
     buildToolsVersion "29.0.2"
-
+    namespace 'com.tencent.yolov8ncnn'
     defaultConfig {
         applicationId "com.tencent.yolov8ncnn"
         archivesBaseName = "$applicationId"
 
-        minSdkVersion 24
+        minSdkVersion 27
     }
 
     externalNativeBuild {
