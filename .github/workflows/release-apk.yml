@@ -13,61 +13,73 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
+
     - name: Enter project directory
       run: |
         ls -la
-        cd ncnn-android-yolo11/ncnn-android-yolo11 && ls -la
+        cd ncnn-android-yolo11 && ls -la
 
     - uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
         java-version: '21'
 
-    - name: ncnn
+    - name: Download and extract NCNN
       run: |
+        cd ncnn-android-yolo11
         wget -q https://github.com/Tencent/ncnn/releases/download/${NCNN_VERSION}/ncnn-${NCNN_VERSION}-android-vulkan.zip
-        unzip -q ncnn-${NCNN_VERSION}-android-vulkan.zip -d app/src/main/jni
+        unzip -q ncnn-${NCNN_VERSION}-android-vulkan.zip -d app/src/main/jni/
 
-    - name: opencv-mobile
+    - name: Download and extract OpenCV Mobile
       run: |
+        cd ncnn-android-yolo11
         wget -q https://github.com/nihui/opencv-mobile/releases/download/${OPENCV_MOBILE_TAG}/opencv-mobile-${OPENCV_VERSION}-android.zip
-        unzip -q opencv-mobile-${OPENCV_VERSION}-android.zip -d app/src/main/jni
+        unzip -q opencv-mobile-${OPENCV_VERSION}-android.zip -d app/src/main/jni/
 
-    - name: vulkan-turnip-driver
+    - name: Download and extract Vulkan Turnip Driver
       run: |
-        wget -q https://github.com/nihui/mesa-turnip-android-driver/releases/download/${MESA_TURNIP_VERSION}/mesa-turnip-android-${MESA_TURNIP_VERSION}.zip
+        cd ncnn-android-yolo11
         mkdir -p app/src/main/jniLibs/arm64-v8a
-        unzip -q mesa-turnip-android-${MESA_TURNIP_VERSION}.zip -d app/src/main/jniLibs/arm64-v8a
+        wget -q https://github.com/nihui/mesa-turnip-android-driver/releases/download/${MESA_TURNIP_VERSION}/mesa-turnip-android-${MESA_TURNIP_VERSION}.zip
+        unzip -q mesa-turnip-android-${MESA_TURNIP_VERSION}.zip -d app/src/main/jniLibs/arm64-v8a/
 
-    - name: modify-jni-cmakelists
+    - name: Modify CMakeLists.txt
       run: |
+        cd ncnn-android-yolo11
         sed -i "s@ncnn-[^-]*-android-vulkan@ncnn-${NCNN_VERSION}-android-vulkan@g" app/src/main/jni/CMakeLists.txt
         sed -i "s@opencv-mobile-[^-]*-android@opencv-mobile-${OPENCV_VERSION}-android@g" app/src/main/jni/CMakeLists.txt
 
-    - name: build-apk
+    - name: Build APK
       run: |
-        bash ./gradlew assembleRelease --stacktrace
+        cd ncnn-android-yolo11
+        chmod +x gradlew
+        ./gradlew assembleRelease --stacktrace
 
-    - name: sign-apk
+    - name: Sign APK
       id: signapk
       run: |
-        DATE=`date +'%Y%m%d'`
-        SHA_SHORT=`git rev-parse --short HEAD`
-        UNSIGNED_APK=`find app/build/outputs/apk/release -type f -name "*-release-unsigned.apk" | head -n 1`
+        cd ncnn-android-yolo11
+        DATE=$(date +'%Y%m%d')
+        SHA_SHORT=$(git rev-parse --short HEAD)
+        UNSIGNED_APK=$(find app/build/outputs/apk/release -type f -name "*-release-unsigned.apk" | head -n 1)
         ALIGNED_APK=${UNSIGNED_APK//-release-unsigned.apk/-release-unsigned-aligned.apk}
         SIGNED_APK=${{ github.event.repository.name }}-${DATE}.${SHA_SHORT}.apk
+
         keytool -genkey -noprompt -alias ncnn \
-            -dname "CN=mqttserver.ibm.com, OU=ID, O=IBM, L=Hursley, S=Hants, C=GB"\
+            -dname "CN=mqttserver.ibm.com, OU=ID, O=IBM, L=Hursley, S=Hants, C=GB" \
             -keystore ncnn.keystore -storepass 7767517 -keypass 7767517 \
             -keyalg RSA -keysize 2048 -validity 10000
-        ${ANDROID_HOME}/build-tools/${BUILD_TOOLS_VERSION}/zipalign -f -v 4 ${UNSIGNED_APK} ${SIGNED_APK}
+
+        ${ANDROID_HOME}/build-tools/${BUILD_TOOLS_VERSION}/zipalign -f -v 4 "${UNSIGNED_APK}" "${ALIGNED_APK}"
         ${ANDROID_HOME}/build-tools/${BUILD_TOOLS_VERSION}/apksigner sign --ks ncnn.keystore --ks-key-alias ncnn \
-            --ks-pass pass:7767517 --key-pass pass:7767517 --out ${SIGNED_APK} ${SIGNED_APK}
-        ${ANDROID_HOME}/build-tools/${BUILD_TOOLS_VERSION}/apksigner verify ${SIGNED_APK}
+            --ks-pass pass:7767517 --key-pass pass:7767517 --out "${SIGNED_APK}" "${ALIGNED_APK}"
+        ${ANDROID_HOME}/build-tools/${BUILD_TOOLS_VERSION}/apksigner verify "${SIGNED_APK}"
+
+        cp "${SIGNED_APK}" ../"${SIGNED_APK}"
         echo "SIGNED_APK=${SIGNED_APK}" >> $GITHUB_OUTPUT
         echo "APK_VERSION=${DATE}.${SHA_SHORT}" >> $GITHUB_OUTPUT
 
-    - name: create-release
+    - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
