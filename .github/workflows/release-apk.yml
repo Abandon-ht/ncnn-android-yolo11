@@ -41,7 +41,7 @@ jobs:
 
     - name: build-apk
       run: |
-        bash ./gradlew assembleRelease --stacktrace
+        bash ./ncnn-android-yolo11/gradlew assembleRelease --stacktrace
 
     - name: sign-apk
       id: signapk
