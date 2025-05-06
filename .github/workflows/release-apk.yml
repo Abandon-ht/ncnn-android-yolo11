@@ -16,7 +16,7 @@ jobs:
     - name: Enter project directory
       run: |
         ls -la
-        cd ncnn-android-yolo11 && ls -la
+        cd ncnn-android-yolo11/ncnn-android-yolo11 && ls -la
 
     - uses: actions/setup-java@v4
       with:
